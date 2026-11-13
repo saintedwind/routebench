@@ -1,0 +1,25 @@
+name: RouteBench checks
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install '.[dev]'
+      - run: python -m ruff check .
+      - run: python -m ruff format --check .
+      - run: routebench fetch
+      - run: python -m pytest -q
+      - run: routebench evaluate --output .runtime/linear.json
+      - run: python -m build
