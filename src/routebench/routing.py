@@ -191,7 +191,7 @@ class LocalModel:
             via = "local"
         except (URLError, OSError):
             label, via = None, "local_unavailable"
-        except (ValueError, KeyError, TypeError, IndexError, AttributeError):
+        except (ValueError, KeyError, TypeError, IndexError, AttributeError, RecursionError):
             label, via = None, "local_invalid"
         return Decision(
             label,

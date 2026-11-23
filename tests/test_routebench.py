@@ -151,3 +151,24 @@ def test_metrics_preserve_wrong_routes_and_reported_usage():
     interval = paired_interval(labels, baseline, candidate)
     assert interval["delta_candidate_minus_baseline"] == 2
     assert interval["low95"] <= 2 <= interval["high95"]
+
+
+@pytest.mark.parametrize("nested_content", [False, True])
+def test_deeply_nested_response_stays_in_review(monkeypatch, nested_content):
+    from io import BytesIO
+
+    nested = "[" * 10000 + "0"
+    nested += "]" * 10000
+    raw = nested.encode()
+    if nested_content:
+        raw = json.dumps(
+            {"choices": [{"finish_reason": "stop", "message": {"content": nested}}]}
+        ).encode()
+    assert len(raw) < 65536
+    model = LocalModel("http://127.0.0.1:8080/v1/chat/completions", "qwen")
+    monkeypatch.setattr(model.opener, "open", lambda *_args, **_kwargs: BytesIO(raw))
+    result = model.predict("Hello")
+    assert result.label is None
+    assert result.via == "local_invalid"
+    combined = cascade(Decision(None, "review", 0.25), result)
+    assert combined.label is None
