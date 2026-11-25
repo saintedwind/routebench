@@ -93,6 +93,8 @@ def loss(gold: str, predicted: str | None) -> int:
 
 def choose_threshold(gold: list[str], raw: list[Decision]) -> float:
     """Minimize domain-balanced cost on validation, then prefer more abstention on ties."""
+    if not gold:
+        raise ValueError("Threshold calibration requires non-empty validation data")
     labels = np.array(gold)
     counts = {label: gold.count(label) for label in set(gold)}
     weights = np.array([1 / counts[label] for label in gold])

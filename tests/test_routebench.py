@@ -172,3 +172,8 @@ def test_deeply_nested_response_stays_in_review(monkeypatch, nested_content):
     assert result.via == "local_invalid"
     combined = cascade(Decision(None, "review", 0.25), result)
     assert combined.label is None
+
+
+def test_empty_validation_cannot_select_a_threshold():
+    with pytest.raises(ValueError, match="validation"):
+        choose_threshold([], [])
