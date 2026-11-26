@@ -177,3 +177,28 @@ def test_deeply_nested_response_stays_in_review(monkeypatch, nested_content):
 def test_empty_validation_cannot_select_a_threshold():
     with pytest.raises(ValueError, match="validation"):
         choose_threshold([], [])
+
+
+def test_empty_evaluation_rejected():
+    with pytest.raises(ValueError, match="non-empty"):
+        metrics([], [])
+    with pytest.raises(ValueError, match="non-empty"):
+        paired_interval([], [], [])
+
+
+@pytest.mark.parametrize("resamples", [0, -1, True, 1.5])
+def test_invalid_bootstrap_count_rejected(resamples):
+    decisions = [Decision("work", "linear")]
+    with pytest.raises(ValueError, match="positive integer"):
+        paired_interval(["work"], decisions, decisions, resamples=resamples)
+
+
+def test_single_sample_evaluation_is_finite():
+    baseline = [Decision("work", "linear")]
+    candidate = [Decision(None, "review")]
+    summary = metrics(["work"], baseline)
+    interval = paired_interval(["work"], baseline, candidate, resamples=1)
+    assert summary["mean_cost"] == 0
+    assert interval["delta_candidate_minus_baseline"] == 1
+    assert interval["low95"] == interval["high95"] == 1
+    json.dumps({"metrics": summary, "interval": interval}, allow_nan=False)

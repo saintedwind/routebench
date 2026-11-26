@@ -15,6 +15,8 @@ def mean(values):
 
 
 def metrics(labels: list[str], predictions: list[Decision]) -> dict:
+    if not len(labels):
+        raise ValueError("Evaluation requires non-empty labels")
     pairs = list(zip(labels, predictions, strict=True))
     inside = [(label, p) for label, p in pairs if label != OUTSIDE]
     outside = [p for label, p in pairs if label == OUTSIDE]
@@ -48,6 +50,10 @@ def metrics(labels: list[str], predictions: list[Decision]) -> dict:
 
 def paired_interval(labels, baseline, candidate, *, seed=427, resamples=2000):
     """Stratified paired bootstrap for the delta in sample-average decision cost."""
+    if not len(labels):
+        raise ValueError("Evaluation requires non-empty labels")
+    if type(resamples) is not int or resamples < 1:
+        raise ValueError("resamples must be a positive integer")
     labels = np.asarray(labels)
     delta = np.asarray(
         [
